@@ -7,6 +7,8 @@ import time
 import torch
 import torch.nn as nn
 
+from tqdm import tqdm
+
 import pykp.utils.io as io
 from inference.evaluate import evaluate_loss
 from pykp.utils.label_assign import hungarian_assign
@@ -35,7 +37,21 @@ def train_model(model, optimizer, train_data_loader, valid_data_loader, opt):
     num_stop_dropping = 0
 
     model.train()
-    for epoch in range(opt.start_epoch, opt.epochs + 1):
+
+    # Modification to be able to train in numbers of steps instead of number of epochs
+    # Code from transformers' trainer 
+    if opt.max_steps > 0:
+        print("MAX STEPS DETECTED")
+        print("LEN DATALOADER: {}".format(len(train_data_loader)))
+        epochs = opt.max_steps // len(train_data_loader) + int(
+                    opt.max_steps % len(train_data_loader) > 0
+                )
+        
+        print("MAX EPOCHS= {}".format(epochs))
+    else:
+        epochs = opt.epochs
+
+    for epoch in range(opt.start_epoch, epochs + 1):
         if early_stop_flag:
             break
         for batch_i, batch in enumerate(train_data_loader):
@@ -53,6 +69,9 @@ def train_model(model, optimizer, train_data_loader, valid_data_loader, opt):
                                                                                                  total_batch,
                                                                                                  current_train_ppl,
                                                                                                  current_train_loss))
+                
+            if total_batch == opt.max_steps:
+                break
             if epoch >= opt.start_checkpoint_at:
                 if (opt.checkpoint_interval == -1 and batch_i == len(train_data_loader) - 1) or \
                         (opt.checkpoint_interval > -1 and total_batch > 1 and
@@ -118,6 +137,19 @@ def train_model(model, optimizer, train_data_loader, valid_data_loader, opt):
                         early_stop_flag = True
                         break
                     report_train_loss_statistics.clear()
+
+        if opt.max_steps > 0 and total_batch==opt.max_steps:
+            sys.stdout.flush()
+            check_pt_model_path = os.path.join(opt.model_path, 'final_model.pt')
+            torch.save(  # save model parameters
+                model.state_dict(),
+                open(check_pt_model_path, 'wb')
+            )
+            logging.info('Saving checkpoint to %s' % check_pt_model_path)
+
+            print("TRAINED SEEING {} EXAMPLES".format(total_batch*opt.batch_size))
+
+            break
 
     # export the training curve
     train_valid_curve_path = opt.exp_path + '/train_valid_curve'

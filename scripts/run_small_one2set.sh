@@ -77,8 +77,10 @@ cmd="python train.py \
 -assign_steps ${assign_steps} \
 -start_checkpoint_at=0 \
 -vocab_size=2000 \
--checkpoint_interval=-1 \
+-checkpoint_interval=15000 \
+-max_steps=150000
 -seperate_pre_ab
+-report_every=1000
 "
 
 if [ "${copy_attention}" = true ] ; then

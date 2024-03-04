@@ -122,6 +122,10 @@ def train_opts(parser):
     # Optimization options
     parser.add_argument('-epochs', type=int, default=20,
                         help='Number of training epochs')
+    
+    parser.add_argument('-max_steps', type=int, default=-1,
+                        help='Number of training steps instead of epochs')
+    
     parser.add_argument('-start_epoch', type=int, default=1,
                         help='The epoch from which to start')
     parser.add_argument('-max_grad_norm', type=float, default=1,

@@ -8,7 +8,7 @@ data_dir="data/kp20k_separated"
 seed=27
 dropout=0.1
 learning_rate=0.0001
-batch_size=12
+batch_size=32
 copy_attention=true
 
 max_kp_len=6
@@ -73,7 +73,10 @@ cmd="python train.py \
 -loss_scale_pre ${loss_scale_pre} \
 -loss_scale_ab ${loss_scale_ab} \
 -assign_steps ${assign_steps} \
+-checkpoint_interval=15000 \
+-max_steps=150000
 -seperate_pre_ab
+-report_every=1000
 "
 
 if [ "${copy_attention}" = true ] ; then
